@@ -94,7 +94,7 @@ if evaluate:
 
 
     # ----------------------------
-    # Syntactic features (RAW answer!)
+    # Syntactic features
     # ----------------------------
 
     avg_sentence_length, noun_ratio, verb_ratio, adj_ratio, readability = extract_syntactic_features(
@@ -115,9 +115,29 @@ if evaluate:
 
     similarity = float(similarity)
 
-
-    # normalize similarity (helps scoring stability)
     semantic_component = max(0, min((similarity - 0.3) / 0.6, 1))
+
+
+    # ====================================================
+    # ✅ NEW: Detect copied answer
+    # ====================================================
+
+    is_copied_answer = False
+
+    question_clean = question.strip().lower()
+    answer_clean = answer.strip().lower()
+
+    # Exact match
+    if question_clean == answer_clean:
+        is_copied_answer = True
+
+    # High similarity + similar length
+    elif similarity > 0.9:
+        q_len = len(question.split())
+        a_len = len(answer.split())
+
+        if abs(q_len - a_len) <= 3:
+            is_copied_answer = True
 
 
     # ----------------------------
@@ -199,16 +219,34 @@ if evaluate:
         final_score *= 0.4
 
 
+    # ====================================================
+    # ✅ NEW: Penalize copied answer
+    # ====================================================
+
+    if is_copied_answer:
+        final_score = 0
+
+
     final_score = round(min(final_score, 10), 2)
 
 
-    # ----------------------------
-    # Criterion scores
-    # ----------------------------
+    # ====================================================
+    # ✅ NEW: Zero-score condition
+    # ====================================================
 
-    content_score = round(final_score * 0.5, 2)
-    language_score = round(final_score * 0.2, 2)
-    organisation_score = round(final_score * 0.3, 2)
+    is_totally_wrong = False
+
+    if final_score <= 0.5 or is_copied_answer:
+        final_score = 0
+        content_score = 0
+        language_score = 0
+        organisation_score = 0
+        is_totally_wrong = True
+
+    else:
+        content_score = round(final_score * 0.5, 2)
+        language_score = round(final_score * 0.2, 2)
+        organisation_score = round(final_score * 0.3, 2)
 
 
     # ----------------------------
@@ -238,6 +276,17 @@ if evaluate:
     c2.metric("Content", f"{content_score}/5")
     c3.metric("Language", f"{language_score}/2")
     c4.metric("Organisation", f"{organisation_score}/3")
+
+
+    # ====================================================
+    # ✅ NEW: Custom error messages
+    # ====================================================
+
+    if is_totally_wrong:
+        if is_copied_answer:
+            st.error("❌ Answer is copied from the question and does not provide any explanation.")
+        else:
+            st.error("❌ Answer is totally wrong and does not match the question.")
 
 
     # ----------------------------
