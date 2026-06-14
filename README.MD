@@ -193,11 +193,11 @@ Generates understandable feedback for students.
 
 The system successfully evaluates descriptive answers using a combination of semantic and structural analysis.
 
-![alt text](<Irrelevant Answer.png>)
+![Irrelevant Answer](Irrelevant%20Answer.png)
 
-![alt text](<Partially Relevant Answer.png>)
+![Partially Relevant Answer](Partially%20Relevant%20Answer.png)
 
-![alt text](<Relevant Answer.png>)
+![Relevant Answer](Relevant%20Answer.png)
 
 ### Achievements
 
